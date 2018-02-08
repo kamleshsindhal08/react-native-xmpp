@@ -5,16 +5,17 @@
 #import "XMPPLogging.h"
 #import "XMPPReconnect.h"
 #import "XMPPUser.h"
-#import <CocoaLumberjack/DDLog.h>
+#import "DDLog+LOGV.h"
 #import "DDTTYLogger.h"
 #import <CFNetwork/CFNetwork.h>
 
 // Log levels: off, error, warn, info, verbose
 #if DEBUG
-static DDLogLevel ddLogLevel = DDLogLevelVerbose;
-//static const int ddLogLevel = LOG_LEVEL_INFO;
+//static DDLogLevel ddLogLevel = DDLogLevelVerbose;
+static const int ddLogLevel = LOG_LEVEL_VERBOSE;
 #else
-static DDLogLevel ddLogLevel = DDLogLevelInfo;
+//static DDLogLevel ddLogLevel = DDLogLevelInfo;
+static const int ddLogLevel = LOG_LEVEL_INFO;
 #endif
 
 @interface RNXMPPService(){
@@ -60,7 +61,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 
 - (void)setupStream
 {
-    [DDLog addLogger:[DDTTYLogger sharedInstance] withLevel:ddLogLevel];
+    [DDLog addLogger:[DDTTYLogger sharedInstance] withLogLevel:ddLogLevel];
     NSAssert(xmppStream == nil, @"Method setupStream invoked multiple times");
 
     // Setup xmpp stream
