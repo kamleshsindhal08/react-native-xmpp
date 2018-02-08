@@ -4,6 +4,9 @@ import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smackx.forward.packet.Forwarded;
+
+import rnxmpp.mam.MamElements;
 
 /**
  * Created by Kristian Frølund on 7/19/16.
@@ -21,5 +24,6 @@ public interface XmppServiceListener {
     void onConnnect(String username, String password);
     void onDisconnect(Exception e);
     void onLogin(String username, String password);
+    void onForwarded(MamElements.MamResultExtension result);
 
 }

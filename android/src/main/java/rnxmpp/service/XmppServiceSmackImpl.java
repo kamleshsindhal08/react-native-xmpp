@@ -18,13 +18,19 @@ import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterLoadedListener;
 import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.XmlStringBuilder;
+import org.jivesoftware.smackx.delay.packet.DelayInformation;
+import org.jivesoftware.smackx.delay.provider.DelayInformationProvider;
+import org.jivesoftware.smackx.forward.provider.ForwardedProvider;
+import org.jivesoftware.smackx.forward.packet.Forwarded;
 
 import android.os.AsyncTask;
 
@@ -34,6 +40,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import rnxmpp.mam.MamElements;
+import rnxmpp.mam.MamResultProvider;
 import rnxmpp.ssl.UnsafeSSLContext;
 
 
@@ -50,6 +58,17 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     Roster roster;
     List<String> trustedHosts = new ArrayList<>();
     String password;
+
+
+
+
+    static{
+        ProviderManager.addExtensionProvider("delay", DelayInformation.NAMESPACE, new DelayInformationProvider());
+        ProviderManager.addExtensionProvider("forward", Forwarded.NAMESPACE, new ForwardedProvider());
+        ProviderManager.addExtensionProvider("result", MamElements.NAMESPACE, new MamResultProvider());
+
+    }
+
 
     public XmppServiceSmackImpl(XmppServiceListener xmppServiceListener) {
         this.xmppServiceListener = xmppServiceListener;
@@ -73,7 +92,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
                 .setUsernameAndPassword(jidParts[0], password)
                 .setConnectTimeout(3000)
                 //.setDebuggerEnabled(true)
-                .setSecurityMode(ConnectionConfiguration.SecurityMode.required);
+                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
 
         if (serviceNameParts.length>1){
             confBuilder.setResource(serviceNameParts[1]);
@@ -92,7 +111,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         XMPPTCPConnectionConfiguration connectionConfiguration = confBuilder.build();
         connection = new XMPPTCPConnection(connectionConfiguration);
 
-        connection.addAsyncStanzaListener(this, new OrFilter(new StanzaTypeFilter(IQ.class), new StanzaTypeFilter(Presence.class)));
+        connection.addAsyncStanzaListener(this, new OrFilter(new StanzaTypeFilter(IQ.class), new StanzaTypeFilter(Presence.class),new StanzaTypeFilter(Message.class)));
         connection.addConnectionListener(this);
 
         ChatManager.getInstanceFor(connection).addChatListener(this);
@@ -218,7 +237,24 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             this.xmppServiceListener.onIQ((IQ) packet);
         }else if (packet instanceof Presence){
             this.xmppServiceListener.onPresence((Presence) packet);
-        }else{
+        }else if (packet instanceof Message){
+		
+		Message packett = (Message)packet;
+        System.out.println("** ** ** process packet call");
+
+
+        MamElements.MamResultExtension result = (MamElements.MamResultExtension)packett.getExtension("result",MamElements.NAMESPACE);
+        if(result != null){
+            System.out.println("** ** ** resultrrrrrrrrrrrrrrrrr " + result.toXML());
+            this.xmppServiceListener.onForwarded(result);
+		}else{
+		
+		System.out.println("** ** ** no result " + packett.toXML());
+            this.xmppServiceListener.onMessage(packett);
+		}
+		
+		
+		}else{
             logger.log(Level.WARNING, "Got a Stanza, of unknown subclass", packet.toXML());
         }
     }

@@ -14,7 +14,10 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
+import org.jivesoftware.smackx.forward.packet.Forwarded;
 
+import rnxmpp.mam.MamElements;
+import rnxmpp.mam.MamResultProvider;
 import rnxmpp.utils.Parser;
 
 /**
@@ -62,7 +65,23 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         params.putString("body", message.getBody());
         params.putString("from", message.getFrom());
         params.putString("src", message.toXML().toString());
+        System.out.println("** ** ** Message");
         sendEvent(reactContext, RNXMPP_MESSAGE, params);
+    }
+
+    @Override
+    public void onForwarded(MamElements.MamResultExtension result){
+        Forwarded forwarded = result.getForwarded();
+        WritableMap params = Arguments.createMap();
+        params.putString("from", forwarded.getForwardedPacket().getFrom());
+        params.putString("to", forwarded.getForwardedPacket().getTo());
+        params.putString("timestamp", forwarded.getDelayInformation().getStamp().toString());
+        params.putString("src", forwarded.toXML().toString());
+        params.putString("id", result.getId());
+        params.putString("forwarded", "true");
+        System.out.println("** ** ** Forwarded");
+        sendEvent(reactContext, RNXMPP_MESSAGE, params);
+
     }
 
     @Override
