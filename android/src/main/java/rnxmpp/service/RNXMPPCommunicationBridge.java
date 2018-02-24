@@ -59,6 +59,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
 
     @Override
     public void onMessage(Message message) {
+        // System.out.println("raw >>> "+ message.toXML().xmlnsAttribute());
         WritableMap params = Arguments.createMap();
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
@@ -73,13 +74,29 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public void onForwarded(MamElements.MamResultExtension result){
         Forwarded forwarded = result.getForwarded();
         WritableMap params = Arguments.createMap();
+        WritableMap resultObj = Arguments.createMap();
+        WritableMap forwardedObj = Arguments.createMap();
+        WritableMap delay = Arguments.createMap();
+        WritableMap message = Arguments.createMap();
+
         params.putString("from", forwarded.getForwardedPacket().getFrom());
-        params.putString("to", forwarded.getForwardedPacket().getTo());
-        params.putString("timestamp", forwarded.getDelayInformation().getStamp().toString());
-        params.putString("src", forwarded.toXML().toString());
-        params.putString("id", result.getId());
-        params.putString("forwarded", "true");
+
+        delay.putString("stamp", forwarded.getDelayInformation().getStamp().toString());
+
+        message.putString("body", ((Message) forwarded.getForwardedPacket()).getBody());
+        message.putString("from", forwarded.getForwardedPacket().getFrom());
+        message.putString("to", forwarded.getForwardedPacket().getTo());
+        // params.putString("timestamp", forwarded.getDelayInformation().getStamp().toString());
+        message.putString("src", forwarded.toXML().toString());
+        message.putString("id", result.getId());
+
+        // params.putString("forwarded", "true");
         System.out.println("** ** ** Forwarded");
+        forwardedObj.putMap("delay", delay);
+        forwardedObj.putMap("message", message);
+
+        resultObj.putMap("forwarded", forwardedObj);
+        params.putMap("result", resultObj);
         sendEvent(reactContext, RNXMPP_MESSAGE, params);
 
     }
