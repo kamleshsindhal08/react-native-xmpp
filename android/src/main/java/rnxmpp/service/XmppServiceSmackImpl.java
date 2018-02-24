@@ -237,24 +237,16 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             this.xmppServiceListener.onIQ((IQ) packet);
         }else if (packet instanceof Presence){
             this.xmppServiceListener.onPresence((Presence) packet);
-        }else if (packet instanceof Message){
-		
-		Message packett = (Message)packet;
-        System.out.println("** ** ** process packet call");
+        }
+        else if (packet instanceof Message){
 
-
+		    Message packett = (Message)packet;
         MamElements.MamResultExtension result = (MamElements.MamResultExtension)packett.getExtension("result",MamElements.NAMESPACE);
         if(result != null){
-            System.out.println("** ** ** resultrrrrrrrrrrrrrrrrr " + result.toXML());
             this.xmppServiceListener.onForwarded(result);
-		}else{
-		
-		System.out.println("** ** ** no result " + packett.toXML());
-            this.xmppServiceListener.onMessage(packett);
+		    }
 		}
-		
-		
-		}else{
+		else{
             logger.log(Level.WARNING, "Got a Stanza, of unknown subclass", packet.toXML());
         }
     }
