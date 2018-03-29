@@ -20,6 +20,9 @@ public interface XmppService {
     void message(String text, String to, String thread);
 
     @ReactMethod
+    void sendSeenNotif(String messageStanza);
+
+    @ReactMethod
     void presence(String to, String type);
 
     @ReactMethod

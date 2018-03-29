@@ -126,6 +126,10 @@ class XMPP {
         RNXMPP.sendStanza(stanza);
     }
 
+  sendSeenNotif(stanza) {
+        RNXMPP.sendSeenNotif(stanza);
+  }
+
     fetchRoster(){
         RNXMPP.fetchRoster();
     }

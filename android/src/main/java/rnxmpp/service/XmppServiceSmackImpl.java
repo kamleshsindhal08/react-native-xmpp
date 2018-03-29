@@ -63,7 +63,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     List<String> trustedHosts = new ArrayList<>();
     String password;
 
-    private DeliveryReceiptManager mDeliveryReceiptManager;
+    private DeliveryReceiptManager deliveryReceiptManager;
 
 //    mDeliveryReceiptManager = DeliveryReceiptManager.getInstanceFor(
 //      XmppManager.getInstance().getXMPPConnection());
@@ -88,10 +88,31 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
     @Override
     public void onReceiptReceived(String fromJid, String toJid, String receiptId, Stanza receipt) {
-        logger.log(Level.INFO, ".......... got .........");
+        logger.log(Level.INFO, (".......... got ........ ." + fromJid +"  "+ toJid + "  " + receipt.toXML()));
+
 //        if(isAdded()){
 //            // Check if the receiptId equals to the receipt you have sent.
 //        }
+    }
+
+
+    @Override
+    public void sendSeenNotif(String messageStanza) {
+        logger.log(Level.INFO, " sending receipit >>>> ");
+
+//        StanzaPacket packet = new StanzaPacket(messageStanza);
+//        Stanza toStanza = (Stanza) packet;
+//        Message messageWithReceiptRequest = (Message) toStanza;
+//        Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
+//        throws XmlPullParserException, IOException, SmackException
+        try {
+            Message messageWithReceiptRequest = (Message) PacketParserUtils.parseStanza(messageStanza);
+            Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
+            this.connection.sendStanza(ack);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "coulndt send receipt");
+        }
+
     }
 
     @Override
@@ -103,7 +124,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
     @Override
     public void connect(String jid, String password, String authMethod, String hostname, Integer port) {
-        DeliveryReceiptManager.setDefaultAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
+//        DeliveryReceiptManager.setDefaultAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
 
         final String[] jidParts = jid.split("@");
         String[] serviceNameParts = jidParts[1].split("/");
@@ -164,9 +185,12 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             }
         }.execute();
 
-        DeliveryReceiptManager deliveryReceiptManager = DeliveryReceiptManager.getInstanceFor(this.connection);
-        deliveryReceiptManager.setAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
-        deliveryReceiptManager.autoAddDeliveryReceiptRequests();
+        deliveryReceiptManager = DeliveryReceiptManager.getInstanceFor(this.connection);
+//        deliveryReceiptManager.setAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
+//        deliveryReceiptManager.autoAddDeliveryReceiptRequests();
+        deliveryReceiptManager.addReceiptReceivedListener(this);
+
+        //deliveryReceiptManager.
 
     }
 
@@ -302,6 +326,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
     @Override
     public void processMessage(Chat chat, Message message) {
+        //DeliveryReceipt d = new DeliveryReceipt()
         this.xmppServiceListener.onMessage(message);
     }
 

@@ -38,6 +38,12 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements rnxmpp.s
 
     @Override
     @ReactMethod
+    public void sendSeenNotif(String messageStanza) {
+        this.xmppService.sendSeenNotif(messageStanza);
+    }
+
+    @Override
+    @ReactMethod
     public void connect(String jid, String password, String authMethod, String hostname, Integer port){
         this.xmppService.connect(jid, password, authMethod, hostname, port);
     }

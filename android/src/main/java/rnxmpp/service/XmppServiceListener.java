@@ -10,7 +10,6 @@ import rnxmpp.mam.MamElements;
 
 /**
  * Created by Kristian Frølund on 7/19/16.
- * Updated by Faysal Ahmed on 03/28/18.
  * Copyright (c) 2016. Teletronics. All rights reserved
  */
 
@@ -27,8 +26,5 @@ public interface XmppServiceListener {
     void onDisconnect(Exception e);
     void onLogin(String username, String password);
     void onForwarded(MamElements.MamResultExtension result);
-    
-    // onMessageSend is supposed to implement the message send uniqueId
-    // onForwarted is supposed to implement message history callback js
 
 }
