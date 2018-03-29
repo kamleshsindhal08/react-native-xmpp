@@ -30,6 +30,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_ERROR =       "RNXMPPError";
     public static final String RNXMPP_LOGIN_ERROR = "RNXMPPLoginError";
     public static final String RNXMPP_MESSAGE =     "RNXMPPMessage";
+    public static final String RNXMPP_MESSAGE_SEND ="RNXMPPMessageSend";
     public static final String RNXMPP_ROSTER =      "RNXMPPRoster";
     public static final String RNXMPP_IQ =          "RNXMPPIQ";
     public static final String RNXMPP_PRESENCE =    "RNXMPPPresence";
@@ -63,11 +64,17 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         WritableMap params = Arguments.createMap();
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
+        params.putString("id", message.getStanzaId());
         params.putString("body", message.getBody());
         params.putString("from", message.getFrom());
         params.putString("src", message.toXML().toString());
-        System.out.println("** ** ** Message");
+//        System.out.println("** ** ** Message");
         sendEvent(reactContext, RNXMPP_MESSAGE, params);
+    }
+
+    @Override
+    public void onMessageSend(String stanzaId) {
+        sendEvent(reactContext, RNXMPP_MESSAGE_SEND, stanzaId);
     }
 
     @Override
@@ -88,7 +95,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         message.putString("to", forwarded.getForwardedPacket().getTo());
         // params.putString("timestamp", forwarded.getDelayInformation().getStamp().toString());
         message.putString("src", forwarded.toXML().toString());
-        message.putString("id", result.getId());
+        message.putString("id", forwarded.getForwardedPacket().getStanzaId());
 
         // params.putString("forwarded", "true");
         System.out.println("** ** ** Forwarded");
