@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReadableArray;
 /**
  * Created by Kristian Frølund on 7/19/16.
  * Copyright (c) 2016. Teletronics. All rights reserved
+ * updated by Faysal Ahmed on 03/29/18
  */
 
 public interface XmppService {
@@ -18,6 +19,9 @@ public interface XmppService {
 
     @ReactMethod
     void message(String text, String to, String thread);
+
+    @ReactMethod
+    void sendSeenNotif(String messageStanza);
 
     @ReactMethod
     void presence(String to, String type);
