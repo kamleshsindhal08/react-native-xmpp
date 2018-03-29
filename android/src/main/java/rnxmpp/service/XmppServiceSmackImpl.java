@@ -31,6 +31,10 @@ import org.jivesoftware.smackx.delay.packet.DelayInformation;
 import org.jivesoftware.smackx.delay.provider.DelayInformationProvider;
 import org.jivesoftware.smackx.forward.provider.ForwardedProvider;
 import org.jivesoftware.smackx.forward.packet.Forwarded;
+import org.jivesoftware.smackx.receipts.DeliveryReceipt;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptRequest;
+import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
 import android.os.AsyncTask;
 
@@ -50,7 +54,7 @@ import rnxmpp.ssl.UnsafeSSLContext;
  * Copyright (c) 2016. Teletronics. All rights reserved
  */
 
-public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatMessageListener, RosterLoadedListener {
+public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatMessageListener, RosterLoadedListener, ReceiptReceivedListener {
     XmppServiceListener xmppServiceListener;
     Logger logger = Logger.getLogger(XmppServiceSmackImpl.class.getName());
 
@@ -59,19 +63,56 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     List<String> trustedHosts = new ArrayList<>();
     String password;
 
+    private DeliveryReceiptManager deliveryReceiptManager;
 
-
+//    mDeliveryReceiptManager = DeliveryReceiptManager.getInstanceFor(
+//      XmppManager.getInstance().getXMPPConnection());
+//        mDeliveryReceiptManager.
+//}
 
     static{
         ProviderManager.addExtensionProvider("delay", DelayInformation.NAMESPACE, new DelayInformationProvider());
         ProviderManager.addExtensionProvider("forward", Forwarded.NAMESPACE, new ForwardedProvider());
         ProviderManager.addExtensionProvider("result", MamElements.NAMESPACE, new MamResultProvider());
+        ProviderManager.addExtensionProvider(DeliveryReceipt.ELEMENT, DeliveryReceipt.NAMESPACE, new DeliveryReceipt.Provider());
+        ProviderManager.addExtensionProvider(DeliveryReceiptRequest.ELEMENT, DeliveryReceipt.NAMESPACE, new DeliveryReceiptRequest.Provider());
+
 
     }
 
 
     public XmppServiceSmackImpl(XmppServiceListener xmppServiceListener) {
         this.xmppServiceListener = xmppServiceListener;
+    }
+
+
+    @Override
+    public void onReceiptReceived(String fromJid, String toJid, String receiptId, Stanza receipt) {
+        logger.log(Level.INFO, (".......... got ........ ." + fromJid +"  "+ toJid + "  " + receipt.toXML()));
+
+//        if(isAdded()){
+//            // Check if the receiptId equals to the receipt you have sent.
+//        }
+    }
+
+
+    @Override
+    public void sendSeenNotif(String messageStanza) {
+        logger.log(Level.INFO, " sending receipit >>>> ");
+
+//        StanzaPacket packet = new StanzaPacket(messageStanza);
+//        Stanza toStanza = (Stanza) packet;
+//        Message messageWithReceiptRequest = (Message) toStanza;
+//        Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
+//        throws XmlPullParserException, IOException, SmackException
+        try {
+            Message messageWithReceiptRequest = (Message) PacketParserUtils.parseStanza(messageStanza);
+            Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
+            this.connection.sendStanza(ack);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "coulndt send receipt");
+        }
+
     }
 
     @Override
@@ -83,6 +124,8 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
     @Override
     public void connect(String jid, String password, String authMethod, String hostname, Integer port) {
+//        DeliveryReceiptManager.setDefaultAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
+
         final String[] jidParts = jid.split("@");
         String[] serviceNameParts = jidParts[1].split("/");
         String serviceName = serviceNameParts[0];
@@ -91,7 +134,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
                 .setServiceName(serviceName)
                 .setUsernameAndPassword(jidParts[0], password)
                 .setConnectTimeout(3000)
-                //.setDebuggerEnabled(true)
+                .setDebuggerEnabled(true)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
 
         if (serviceNameParts.length>1){
@@ -141,11 +184,30 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
             }
         }.execute();
+
+        deliveryReceiptManager = DeliveryReceiptManager.getInstanceFor(this.connection);
+//        deliveryReceiptManager.setAutoReceiptMode(DeliveryReceiptManager.AutoReceiptMode.always);
+//        deliveryReceiptManager.autoAddDeliveryReceiptRequests();
+        deliveryReceiptManager.addReceiptReceivedListener(this);
+
+        //deliveryReceiptManager.
+
     }
 
     @Override
     public void message(String text, String to, String thread) {
+
         String chatIdentifier = (thread == null ? to : thread);
+        Message message = new Message(to, text);
+        DeliveryReceiptRequest.addTo(message);
+        this.xmppServiceListener.onMessageSend(message.getStanzaId());
+        // logger.log(Level.INFO, " getting id before ..... "+ message.getStanzaId());
+//        try {
+//            logger.log(Level.INFO, "SENDING MESSAGE .......");
+//            connection.sendStanza(message);
+//        } catch (SmackException e) {
+//            logger.log(Level.WARNING, "Could not send message", e);
+//        }
 
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
         Chat chat = chatManager.getThreadChat(chatIdentifier);
@@ -157,7 +219,8 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             }
         }
         try {
-            chat.sendMessage(text);
+            chat.sendMessage(message);
+//            chat.get
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send message", e);
         }
@@ -263,6 +326,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
     @Override
     public void processMessage(Chat chat, Message message) {
+        //DeliveryReceipt d = new DeliveryReceipt()
         this.xmppServiceListener.onMessage(message);
     }
 
