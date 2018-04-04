@@ -25,6 +25,7 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     RCTResponseSenderBlock onError;
     RCTResponseSenderBlock onConnect;
     RCTResponseSenderBlock onMessage;
+    RCTResponseSenderBlock onMessageSend;
     RCTResponseSenderBlock onIQ;
     RCTResponseSenderBlock onPresence;
 }
@@ -79,6 +80,12 @@ RCT_EXPORT_MODULE();
     NSDictionary *res = [self contentOf:message];
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessage" body:res];
 
+}
+
+-(void)onMessageSend:(NSString *)stanzaId {
+//    NSDictionary *res = [self contentOf:message];
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSend" body:stanzaId];
+    
 }
 
 -(void)onRosterReceived:(NSArray *)list {
@@ -153,6 +160,11 @@ RCT_EXPORT_METHOD(fetchRoster){
 RCT_EXPORT_METHOD(sendStanza:(NSString *)stanza){
     [RNXMPPService sharedInstance].delegate = self;
     [[RNXMPPService sharedInstance] sendStanza:stanza];
+}
+
+RCT_EXPORT_METHOD(sendSeenNotif:(NSString *)messageStanza){
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] sendSeenNotif:messageStanza];
 }
 
 - (NSDictionary *)constantsToExport

@@ -24,6 +24,7 @@
 
 -(void)onError:(NSError *)error;
 -(void)onMessage:(XMPPMessage *)message;
+-(void)onMessageSend:(NSString *)stanzaId;
 -(void)onPresence:(XMPPPresence *)presence;
 -(void)onIQ:(XMPPIQ *)iq;
 -(void)onRosterReceived:(NSArray *)list;
@@ -65,6 +66,7 @@
 - (void)removeRoster:(NSString *)to;
 -(void)fetchRoster;
 -(void)sendStanza:(NSString *)stanza;
+-(void)sendSeenNotif:(NSString *)messageStanza;
 
 @end
 
