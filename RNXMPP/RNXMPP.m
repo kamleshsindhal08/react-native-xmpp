@@ -15,9 +15,9 @@ const NSString *DigestMD5_AUTH = @"DigestMD5";
 
 @implementation RCTConvert (AuthMethod)
 RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
-                                             SCRAMSHA1_AUTH : @(SCRAM),
-                                             DigestMD5_AUTH : @(MD5)}),
-                                          SCRAM, integerValue)
+                                   SCRAMSHA1_AUTH : @(SCRAM),
+                                   DigestMD5_AUTH : @(MD5)}),
+                   SCRAM, integerValue)
 @end
 
 
@@ -77,13 +77,28 @@ RCT_EXPORT_MODULE();
 }
 
 -(void)onMessage:(XMPPMessage *)message {
-    NSDictionary *res = [self contentOf:message];
+    NSMutableDictionary *res = [self contentOf:message];
+    NSString* test = [message compactXMLString];
+    [res setObject:test forKey:@"src"];
+   // NSString* test2 = @"<message xmlns='jabber:client' default:lang='en' to='f.dev@sendjobs.co/mobile' from='z.dev@sendjobs.co/mobile' type='chat' id='A7ln5-20'><archived xmlns='urn:xmpp:mam:tmp' by='f.dev@sendjobs.co' id='1523356364153031'/><stanza-id xmlns='urn:xmpp:sid:0' by='f.dev@sendjobs.co' id='1523356364153031'/><request xmlns='urn:xmpp:receipts'/><body>qqqq</body><thread>1050306a-4f28-4d5e-88b1-024593deeadf</thread></message>";
+    
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessage" body:res];
-
+    
+}
+- (NSString *)convertToXml:(NSDictionary *)dictionary {
+    
+    NSMutableString *xmlString = [[NSMutableString alloc] init];
+    
+    for (NSString *key in [dictionary allKeys]) {
+        id value = [dictionary objectForKey:key];
+        [xmlString appendFormat:@"<%@>%@</%@>\n", key, value, key];
+    }
+    
+    return [NSString stringWithString:xmlString];
 }
 
 -(void)onMessageSend:(NSString *)stanzaId {
-//    NSDictionary *res = [self contentOf:message];
+    // NSDictionary *res = [self contentOf:message];
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSend" body:stanzaId];
     
 }
@@ -177,3 +192,4 @@ RCT_EXPORT_METHOD(sendSeenNotif:(NSString *)messageStanza){
 
 
 @end
+
