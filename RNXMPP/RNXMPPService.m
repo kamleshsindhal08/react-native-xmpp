@@ -546,6 +546,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 
 - (void)xmppRoom:(XMPPRoom *)sender didReceiveMessage:(XMPPMessage *)message fromOccupant:(XMPPJID *)occupantJID {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    
 }
 
 -(void)sendMessage:(NSString *)text to:(NSString *)to thread:(NSString *)thread {
@@ -571,6 +572,9 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     }
     
     [msg addChild:body];
+    NSXMLElement *receiptRequest = [NSXMLElement elementWithName:@"request" xmlns:@"urn:xmpp:receipts"];
+    [msg addChild:receiptRequest];
+    
     [xmppStream sendElement:msg];
 }
 - (NSString*)generateSecureUUID {
@@ -603,7 +607,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [xmppStream sendElement:el];
 }
 -(void)sendSeenNotif:(NSString *)messageStanza{
-    @try {
+   
         
         NSData *data = [messageStanza dataUsingEncoding:NSUTF8StringEncoding];
         NSError *error;
@@ -611,17 +615,20 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         DDXMLElement *el = [doc rootElement];
         
         XMPPMessage* messageWithReceiptRequest = [XMPPMessage messageFromElement:el];
+  //  [messageWithReceiptRequest addReceiptRequest];
         XMPPMessage* generatedReceiptResponse =[messageWithReceiptRequest generateReceiptResponse];
         
-        [xmppStream sendElement:generatedReceiptResponse];
+       // NSString* stringMsg = [generatedReceiptResponse compactXMLString];
+   // [generatedReceiptResponse addReceiptRequest];
+        
+       [xmppStream sendElement:generatedReceiptResponse];
+      //  [self :stringMsg];
         
         //   [self sendStanza:[messageWithReceiptRequest generateReceiptResponse]];
         //                    Message messageWithReceiptRequest = (Message) PacketParserUtils.parseStanza(messageStanza);
         //                    Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
         //                    this.connection.sendStanza(ack);
-    } @catch (NSException* e) {
-        // logger.log(Level.INFO, "coulndt send receipt");
-    }
+    
 }
 
 -(void)removeRoster:(NSString *)to {
