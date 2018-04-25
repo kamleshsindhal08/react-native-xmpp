@@ -7,6 +7,7 @@
 #import "XMPPUser.h"
 #import "DDLog+LOGV.h"
 #import "DDTTYLogger.h"
+#import "XMPPMessage+XEP_0184.h"
 #import <CFNetwork/CFNetwork.h>
 
 // Log levels: off, error, warn, info, verbose
@@ -47,7 +48,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         // Do any other initialisation stuff here
     });
     return sharedInstance;
-
+    
 }
 
 - (void)dealloc
@@ -63,15 +64,15 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 {
     [DDLog addLogger:[DDTTYLogger sharedInstance] withLogLevel:ddLogLevel];
     NSAssert(xmppStream == nil, @"Method setupStream invoked multiple times");
-
+    
     // Setup xmpp stream
     //
     // The XMPPStream is the base class for all activity.
     // Everything else plugs into the xmppStream, such as modules/extensions and delegates.
-
+    
     // We're restarting our negotiation, so we need to reset the parser.
     xmppStream = [[XMPPStream alloc] init];
-
+    
 #if !TARGET_IPHONE_SIMULATOR
     {
         // Want xmpp to run in the background?
@@ -83,19 +84,19 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         //        We are patiently waiting for a fix from Apple.
         //        If you do enableBackgroundingOnSocket on the simulator,
         //        you will simply see an error message from the xmpp stack when it fails to set the property.
-
+        
         xmppStream.enableBackgroundingOnSocket = YES;
     }
 #endif
-
+    
     // Setup reconnect
     //
     // The XMPPReconnect module monitors for "accidental disconnections" and
     // automatically reconnects the stream for you.
     // There's a bunch more information in the XMPPReconnect header file.
-
+    
     xmppReconnect = [[XMPPReconnect alloc] init];
-
+    
     // Setup roster
     //
     // The XMPPRoster handles the xmpp protocol stuff related to the roster.
@@ -105,24 +106,24 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     // or setup your own using raw SQLite, or create your own storage mechanism.
     // You can do it however you like! It's your application.
     // But you do need to provide the roster with some storage facility.
-
+    
     xmppRosterStorage = [[XMPPRosterMemoryStorage alloc] init];
-
+    
     xmppRoster = [[XMPPRoster alloc] initWithRosterStorage:xmppRosterStorage];
-
+    
     xmppRoster.autoFetchRoster = NO;
     xmppRoster.autoAcceptKnownPresenceSubscriptionRequests = YES;
-
+    
     // Setup vCard support
     //
     // The vCard Avatar module works in conjuction with the standard vCard Temp module to download user avatars.
     // The XMPPRoster will automatically integrate with XMPPvCardAvatarModule to cache roster photos in the roster.
-
-//    xmppvCardStorage = [XMPPvCardCoreDataStorage sharedInstance];
-//    xmppvCardTempModule = [[XMPPvCardTempModule alloc] initWithvCardStorage:xmppvCardStorage];
-//
-//    xmppvCardAvatarModule = [[XMPPvCardAvatarModule alloc] initWithvCardTempModule:xmppvCardTempModule];
-
+    
+    //    xmppvCardStorage = [XMPPvCardCoreDataStorage sharedInstance];
+    //    xmppvCardTempModule = [[XMPPvCardTempModule alloc] initWithvCardStorage:xmppvCardStorage];
+    //
+    //    xmppvCardAvatarModule = [[XMPPvCardAvatarModule alloc] initWithvCardTempModule:xmppvCardTempModule];
+    
     // Setup capabilities
     //
     // The XMPPCapabilities module handles all the complex hashing of the caps protocol (XEP-0115).
@@ -141,15 +142,15 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     //
     // The XMPPCapabilitiesCoreDataStorage is an ideal solution.
     // It can also be shared amongst multiple streams to further reduce hash lookups.
-
-//    xmppCapabilitiesStorage = [XMPPCapabilitiesCoreDataStorage sharedInstance];
-//    xmppCapabilities = [[XMPPCapabilities alloc] initWithCapabilitiesStorage:xmppCapabilitiesStorage];
-//
-//    xmppCapabilities.autoFetchHashedCapabilities = YES;
-//    xmppCapabilities.autoFetchNonHashedCapabilities = NO;
-
+    
+    //    xmppCapabilitiesStorage = [XMPPCapabilitiesCoreDataStorage sharedInstance];
+    //    xmppCapabilities = [[XMPPCapabilities alloc] initWithCapabilitiesStorage:xmppCapabilitiesStorage];
+    //
+    //    xmppCapabilities.autoFetchHashedCapabilities = YES;
+    //    xmppCapabilities.autoFetchNonHashedCapabilities = NO;
+    
     // Activate xmpp modules
-
+    
     [xmppReconnect         activate:xmppStream];
     [xmppRoster            activate:xmppStream];
     [xmppRoster addDelegate:self delegateQueue:dispatch_get_main_queue()];
@@ -160,20 +161,20 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     xmppStreamManagement.autoResume = YES;
     [xmppStreamManagement addDelegate:self  delegateQueue:dispatch_get_main_queue()];
     
-//    [xmppvCardTempModule   activate:xmppStream];
-//    [xmppvCardAvatarModule activate:xmppStream];
-//    [xmppCapabilities      activate:xmppStream];
-//
-
-
-//    xmppMUC = [[XMPPMUC alloc] init];
-//    [xmppMUC activate:xmppStream];
-//    [xmppMUC addDelegate:self delegateQueue:dispatch_get_main_queue()];
-
+    //    [xmppvCardTempModule   activate:xmppStream];
+    //    [xmppvCardAvatarModule activate:xmppStream];
+    //    [xmppCapabilities      activate:xmppStream];
+    //
+    
+    
+    //    xmppMUC = [[XMPPMUC alloc] init];
+    //    [xmppMUC activate:xmppStream];
+    //    [xmppMUC addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    
     // Add ourself as a delegate to anything we may be interested in
-
+    
     [xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
-
+    
     // Optional:
     //
     // Replace me with the proper domain and port.
@@ -184,11 +185,11 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     // then the xmpp framework will follow the xmpp specification, and do a SRV lookup for quack.com.
     //
     // If you don't specify a hostPort, then the default (5222) will be used.
-
-    //	[xmppStream setHostName:@"talk.google.com"];
-    //	[xmppStream setHostPort:5222];
-
-
+    
+    //    [xmppStream setHostName:@"talk.google.com"];
+    //    [xmppStream setHostPort:5222];
+    
+    
     // You may need to alter these settings depending on the server you're connecting to
     customCertEvaluation = YES;
 }
@@ -196,11 +197,11 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 - (void)teardownStream
 {
     [xmppStream removeDelegate:self];
-
+    
     [xmppMUC deactivate];
     [xmppReconnect         deactivate];
     [xmppStream disconnect];
-
+    
     xmppStream = nil;
     xmppReconnect = nil;
 }
@@ -219,11 +220,11 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 - (void)goOnline
 {
     XMPPPresence *presence = [XMPPPresence presence]; // type="available" is implicit
-
+    
     NSString *domain = [xmppStream.myJID domain];
-
+    
     //Google set their presence priority to 24, so we do the same to be compatible.
-
+    
     if([domain isEqualToString:@"gmail.com"]
        || [domain isEqualToString:@"gtalk.com"]
        || [domain isEqualToString:@"talk.google.com"])
@@ -231,14 +232,14 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         NSXMLElement *priority = [NSXMLElement elementWithName:@"priority" stringValue:@"24"];
         [presence addChild:priority];
     }
-
+    
     [[self xmppStream] sendElement:presence];
 }
 
 - (void)goOffline
 {
     XMPPPresence *presence = [XMPPPresence presenceWithType:@"unavailable"];
-
+    
     [[self xmppStream] sendElement:presence];
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,11 +261,11 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     if (![xmppStream isDisconnected]) {
         [self disconnect];
     }
-
+    
     if (myJID == nil || myPassword == nil) {
         return NO;
     }
-
+    
     [xmppStream setMyJID:[XMPPJID jidWithString:myJID]];
     username = myJID;
     password = myPassword;
@@ -274,7 +275,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     if(port){
         xmppStream.hostPort = port;
     }
-
+    
     NSError *error = nil;
     if (port == 5223) {
         self.xmppReconnect.usesOldSchoolSecureConnect = YES;
@@ -298,7 +299,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
             return NO;
         }
     }
-
+    
     return YES;
 }
 
@@ -326,13 +327,13 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 - (void)xmppStream:(XMPPStream *)sender willSecureWithSettings:(NSMutableDictionary *)settings
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
-
+    
     NSString *expectedCertName = [xmppStream hostName];
     if (expectedCertName)
     {
         settings[(NSString *) kCFStreamSSLPeerName] = expectedCertName;
     }
-
+    
     if (customCertEvaluation)
     {
         settings[GCDAsyncSocketManuallyEvaluateTrust] = @(YES);
@@ -379,7 +380,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
  completionHandler:(void (^)(BOOL shouldTrustPeer))completionHandler
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
-
+    
     // The delegate method should likely have code similar to this,
     // but will presumably perform some extra security code stuff.
     // For example, allowing a specific self-signed certificate that is known to the app.
@@ -387,13 +388,13 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     if ([trustedHosts containsObject:xmppStream.hostName]) {
         completionHandler(YES);
     }
-
+    
     dispatch_queue_t bgQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(bgQueue, ^{
-
+        
         SecTrustResultType result = kSecTrustResultDeny;
         OSStatus status = SecTrustEvaluate(trust, &result);
-
+        
         if (status == noErr && (result == kSecTrustResultProceed || result == kSecTrustResultUnspecified)) {
             completionHandler(YES);
         }
@@ -411,14 +412,14 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 - (void)xmppStreamDidConnect:(XMPPStream *)sender
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
-
+    
     isXmppConnected = YES;
-
+    
     NSError *error = nil;
     [self.delegate onConnnect:username password:password];
-
+    
     id <XMPPSASLAuthentication> someAuth = nil;
-
+    
     if (authMethod == SCRAM && [[self xmppStream] supportsSCRAMSHA1Authentication])
     {
         someAuth = [[XMPPSCRAMSHA1Authentication alloc] initWithStream:[self xmppStream] password:password];
@@ -435,7 +436,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     {
         NSString *errMsg = @"No suitable authentication method found";
         NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
-
+        
         error = [NSError errorWithDomain:XMPPStreamErrorDomain code:XMPPStreamUnsupportedAction userInfo:info];
         DDLogError(@"Error authenticating: %@", error);
         [self.delegate onLoginError:error];
@@ -455,7 +456,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         [xmppStreamManagement enableStreamManagementWithResumption:YES maxTimeout:600];
         [xmppStreamManagement automaticallyRequestAcksAfterStanzaCount:1 orTimeout:0];
     }
-
+    
     [self goOnline];
     [self.delegate onLogin:username password:password];
 }
@@ -470,7 +471,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
     [self.delegate onIQ:iq];
-
+    
     return NO;
 }
 
@@ -480,32 +481,32 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     NSMutableArray *list = [NSMutableArray array];
     for (XMPPUserMemoryStorageObject *user in users){
         [list addObject:@{
-                        @"username": [[user jid] user],
-                        @"subscription": [user subscription],
-                        @"displayName": [user displayName],
-                        @"groups": [user groups],
-                        }];
+                          @"username": [[user jid] user],
+                          @"subscription": [user subscription],
+                          @"displayName": [user displayName],
+                          @"groups": [user groups],
+                          }];
     }
     [self.delegate onRosterReceived:list];
-
+    
 }
 
 - (void)xmppRoster:(XMPPRosterMemoryStorage *)sender
     didAddResource:(XMPPResourceMemoryStorageObject *)resource
           withUser:(XMPPUserMemoryStorageObject *)user {
-
+    
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
 }
 
 - (void)xmppRoster:(XMPPRosterMemoryStorage *)sender
-    didRemoveResource:(XMPPResourceMemoryStorageObject *)resource withUser:(XMPPUserMemoryStorageObject *)user {
-
+ didRemoveResource:(XMPPResourceMemoryStorageObject *)resource withUser:(XMPPUserMemoryStorageObject *)user {
+    
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
 }
 
 - (void)xmppRoster:(XMPPRosterMemoryStorage *)sender
-    didUpdateResource:(XMPPResourceMemoryStorageObject *)resource withUser:(XMPPUserMemoryStorageObject *)user {
-
+ didUpdateResource:(XMPPResourceMemoryStorageObject *)resource withUser:(XMPPUserMemoryStorageObject *)user {
+    
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
 }
 
@@ -538,13 +539,14 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
     isXmppConnected = NO;
-
+    
     [self.delegate onDisconnect:error];
-
+    
 }
 
 - (void)xmppRoom:(XMPPRoom *)sender didReceiveMessage:(XMPPMessage *)message fromOccupant:(XMPPJID *)occupantJID {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    
 }
 
 -(void)sendMessage:(NSString *)text to:(NSString *)to thread:(NSString *)thread {
@@ -552,20 +554,40 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
         [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
         return;
     }
+    NSString* unID = [self generateSecureUUID];
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
     NSXMLElement *body = [NSXMLElement elementWithName:@"body"];
     [body setStringValue:text];
-
+    
+    
     NSXMLElement *msg = [NSXMLElement elementWithName:@"message"];
     [msg addAttributeWithName:@"type" stringValue:@"chat"];
     [msg addAttributeWithName:@"to" stringValue: to];
+    [msg addAttributeWithName:@"id" stringValue: unID];
+    
+    [self.delegate onMessageSend:unID];
     
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
     
     [msg addChild:body];
+    NSXMLElement *receiptRequest = [NSXMLElement elementWithName:@"request" xmlns:@"urn:xmpp:receipts"];
+    [msg addChild:receiptRequest];
+    
     [xmppStream sendElement:msg];
+}
+- (NSString*)generateSecureUUID {
+    
+    NSMutableData *data = [NSMutableData dataWithLength:6];
+    
+    int result = SecRandomCopyBytes(NULL, 6, data.mutableBytes);
+    
+    NSAssert(result == 0, @"Error generating random bytes: %d", errno);
+    
+    NSString *base64EncodedData = [data base64EncodedStringWithOptions:0];
+    
+    return base64EncodedData;
 }
 
 -(void)sendPresence:(NSString *)to type:(NSString *)type {
@@ -584,6 +606,30 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     DDXMLElement *el = [doc rootElement];
     [xmppStream sendElement:el];
 }
+-(void)sendSeenNotif:(NSString *)messageStanza{
+   
+        
+        NSData *data = [messageStanza dataUsingEncoding:NSUTF8StringEncoding];
+        NSError *error;
+        DDXMLDocument *doc = [[DDXMLDocument alloc] initWithData:data options:0 error:&error];
+        DDXMLElement *el = [doc rootElement];
+        
+        XMPPMessage* messageWithReceiptRequest = [XMPPMessage messageFromElement:el];
+  //  [messageWithReceiptRequest addReceiptRequest];
+        XMPPMessage* generatedReceiptResponse =[messageWithReceiptRequest generateReceiptResponse];
+        
+       // NSString* stringMsg = [generatedReceiptResponse compactXMLString];
+   // [generatedReceiptResponse addReceiptRequest];
+        
+       [xmppStream sendElement:generatedReceiptResponse];
+      //  [self :stringMsg];
+        
+        //   [self sendStanza:[messageWithReceiptRequest generateReceiptResponse]];
+        //                    Message messageWithReceiptRequest = (Message) PacketParserUtils.parseStanza(messageStanza);
+        //                    Message ack = DeliveryReceiptManager.receiptMessageFor(messageWithReceiptRequest);
+        //                    this.connection.sendStanza(ack);
+    
+}
 
 -(void)removeRoster:(NSString *)to {
     [xmppRoster removeUser:[XMPPJID jidWithString:to]];
@@ -594,3 +640,4 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 }
 
 @end
+

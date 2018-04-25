@@ -12,7 +12,8 @@ var map = {
     'error': 'RNXMPPError',
     'loginError': 'RNXMPPLoginError',
     'login': 'RNXMPPLogin',
-    'roster': 'RNXMPPRoster'
+    'roster': 'RNXMPPRoster',
+    'messageSend': 'RNXMPPMessageSend'
 }
 
 const LOG = (message) => {
@@ -101,7 +102,7 @@ class XMPP {
             NativeAppEventEmitter.addListener(map.loginError, this.onLoginError),
             NativeAppEventEmitter.addListener(map.login, this.onLogin),
         ];
-        
+
         LOG('All event listeners removed');
     }
 
@@ -124,6 +125,10 @@ class XMPP {
     sendStanza(stanza){
         RNXMPP.sendStanza(stanza);
     }
+
+  sendSeenNotif(stanza) {
+        RNXMPP.sendSeenNotif(stanza);
+  }
 
     fetchRoster(){
         RNXMPP.fetchRoster();
