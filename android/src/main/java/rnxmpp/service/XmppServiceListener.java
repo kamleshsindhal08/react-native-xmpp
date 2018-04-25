@@ -5,6 +5,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smackx.forward.packet.Forwarded;
+import com.facebook.react.bridge.WritableMap;
 
 import rnxmpp.mam.MamElements;
 
