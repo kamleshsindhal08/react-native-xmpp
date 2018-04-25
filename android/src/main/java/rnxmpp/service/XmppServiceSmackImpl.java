@@ -47,6 +47,8 @@ import java.util.logging.Logger;
 import rnxmpp.mam.MamElements;
 import rnxmpp.mam.MamResultProvider;
 import rnxmpp.ssl.UnsafeSSLContext;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 
 
 /**
@@ -200,7 +202,18 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         String chatIdentifier = (thread == null ? to : thread);
         Message message = new Message(to, text);
         DeliveryReceiptRequest.addTo(message);
-        this.xmppServiceListener.onMessageSend(message.getStanzaId());
+        
+        WritableMap params = Arguments.createMap();
+        params.putString("thread", message.getThread());
+        params.putString("subject", message.getSubject());
+        params.putString("_id", message.getStanzaId());
+        params.putString("text", message.getBody());
+        params.putString("from", message.getFrom());
+        params.putString("src", message.toXML().toString());
+        params.putString("recipient", to);
+
+
+        this.xmppServiceListener.onMessageSend(params);
         // logger.log(Level.INFO, " getting id before ..... "+ message.getStanzaId());
 //        try {
 //            logger.log(Level.INFO, "SENDING MESSAGE .......");
@@ -222,6 +235,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             chat.sendMessage(message);
 //            chat.get
         } catch (SmackException e) {
+            this.xmppServiceListener.onError(e);
             logger.log(Level.WARNING, "Could not send message", e);
         }
     }
@@ -300,24 +314,16 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             this.xmppServiceListener.onIQ((IQ) packet);
         }else if (packet instanceof Presence){
             this.xmppServiceListener.onPresence((Presence) packet);
-        }else if (packet instanceof Message){
-		
-		Message packett = (Message)packet;
-        System.out.println("** ** ** process packet call");
+        }
+        else if (packet instanceof Message){
 
-
+		    Message packett = (Message)packet;
         MamElements.MamResultExtension result = (MamElements.MamResultExtension)packett.getExtension("result",MamElements.NAMESPACE);
         if(result != null){
-            System.out.println("** ** ** resultrrrrrrrrrrrrrrrrr " + result.toXML());
             this.xmppServiceListener.onForwarded(result);
-		}else{
-		
-		System.out.println("** ** ** no result " + packett.toXML());
-            this.xmppServiceListener.onMessage(packett);
+		    }
 		}
-		
-		
-		}else{
+		else{
             logger.log(Level.WARNING, "Got a Stanza, of unknown subclass", packet.toXML());
         }
     }
