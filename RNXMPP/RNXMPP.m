@@ -97,9 +97,9 @@ RCT_EXPORT_MODULE();
     return [NSString stringWithString:xmlString];
 }
 
--(void)onMessageSend:(NSString *)stanzaId {
+-(void)onMessageSend:(NSDictionary *)params {
     // NSDictionary *res = [self contentOf:message];
-    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSend" body:stanzaId];
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSend" body:params];
     
 }
 

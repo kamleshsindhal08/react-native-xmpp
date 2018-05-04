@@ -565,7 +565,9 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [msg addAttributeWithName:@"to" stringValue: to];
     [msg addAttributeWithName:@"id" stringValue: unID];
     
-    [self.delegate onMessageSend:unID];
+    NSMutableDictionary* newMsgDict = [[NSMutableDictionary alloc] init];
+    
+    
     
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
@@ -574,6 +576,16 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [msg addChild:body];
     NSXMLElement *receiptRequest = [NSXMLElement elementWithName:@"request" xmlns:@"urn:xmpp:receipts"];
     [msg addChild:receiptRequest];
+    
+    [newMsgDict setValue:thread forKey:@"thread"];
+    [newMsgDict setValue:@"" forKey:@"subject"];
+    [newMsgDict setValue:unID forKey:@"_id"];
+    [newMsgDict setValue:text forKey:@"text"];
+    [newMsgDict setValue:@"" forKey:@"from"];
+    [newMsgDict setValue:msg forKey:@"src"];
+    [newMsgDict setValue:to forKey:@"to"];
+    
+    [self.delegate onMessageSend:newMsgDict];
     
     [xmppStream sendElement:msg];
 }
