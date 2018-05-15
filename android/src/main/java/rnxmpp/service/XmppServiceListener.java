@@ -18,6 +18,7 @@ public interface XmppServiceListener {
     void onLoginError(String errorMessage);
     void onLoginError(Exception e);
     void onMessage(Message message);
+    void onMessageError(String errorMessage);
     void onMessageSend(String stanzaId);
     void onRosterReceived(Roster roster);
     void onIQ(IQ iq);
