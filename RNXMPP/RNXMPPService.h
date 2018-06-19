@@ -25,6 +25,7 @@
 -(void)onError:(NSError *)error;
 -(void)onMessage:(XMPPMessage *)message;
 -(void)onMessageSend:(NSString *)stanzaId;
+-(void)onMessageError:(NSString *)errorMessage;
 -(void)onPresence:(XMPPPresence *)presence;
 -(void)onIQ:(XMPPIQ *)iq;
 -(void)onRosterReceived:(NSArray *)list;

@@ -565,6 +565,8 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [msg addAttributeWithName:@"to" stringValue: to];
     [msg addAttributeWithName:@"id" stringValue: unID];
     
+    @try{
+    
     [self.delegate onMessageSend:unID];
     
     if (thread != nil) {
@@ -576,6 +578,10 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [msg addChild:receiptRequest];
     
     [xmppStream sendElement:msg];
+    }@catch(NSException *ex){
+         [self.delegate onMessageError:[ex name]];
+      
+    }
 }
 - (NSString*)generateSecureUUID {
     
