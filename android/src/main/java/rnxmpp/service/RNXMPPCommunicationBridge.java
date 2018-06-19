@@ -79,8 +79,8 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     }
 
     @Override
-    public void onMessageSend(String stanzaId) {
-        sendEvent(reactContext, RNXMPP_MESSAGE_SEND, stanzaId);
+    public void onMessageSend(WritableMap params) {
+        sendEvent(reactContext, RNXMPP_MESSAGE_SEND, params);
     }
 
     @Override

@@ -47,6 +47,8 @@ import java.util.logging.Logger;
 import rnxmpp.mam.MamElements;
 import rnxmpp.mam.MamResultProvider;
 import rnxmpp.ssl.UnsafeSSLContext;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 
 
 /**
@@ -200,6 +202,26 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         String chatIdentifier = (thread == null ? to : thread);
         Message message = new Message(to, text);
         DeliveryReceiptRequest.addTo(message);
+        
+        WritableMap params = Arguments.createMap();
+        params.putString("thread", message.getThread());
+        params.putString("subject", message.getSubject());
+        params.putString("_id", message.getStanzaId());
+        params.putString("text", message.getBody());
+        params.putString("from", message.getFrom());
+        params.putString("src", message.toXML().toString());
+        params.putString("recipient", to);
+
+
+        this.xmppServiceListener.onMessageSend(params);
+        // logger.log(Level.INFO, " getting id before ..... "+ message.getStanzaId());
+//        try {
+//            logger.log(Level.INFO, "SENDING MESSAGE .......");
+//            connection.sendStanza(message);
+//        } catch (SmackException e) {
+//            logger.log(Level.WARNING, "Could not send message", e);
+//        }
+
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
         Chat chat = chatManager.getThreadChat(chatIdentifier);
         if (chat == null) {
