@@ -567,7 +567,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     
     @try{
     
-    [self.delegate onMessageSend:unID];
+    // [self.delegate onMessageSend:unID];
     NSMutableDictionary* newMsgDict = [[NSMutableDictionary alloc] init];
     
     
