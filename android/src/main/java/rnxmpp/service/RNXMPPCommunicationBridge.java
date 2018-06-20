@@ -30,6 +30,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_ERROR =       "RNXMPPError";
     public static final String RNXMPP_LOGIN_ERROR = "RNXMPPLoginError";
     public static final String RNXMPP_MESSAGE =     "RNXMPPMessage";
+    public static final String RNXMPP_MESSAGE_ERROR =     "RNXMPPMessageError";
     public static final String RNXMPP_MESSAGE_SEND ="RNXMPPMessageSend";
     public static final String RNXMPP_ROSTER =      "RNXMPPRoster";
     public static final String RNXMPP_IQ =          "RNXMPPIQ";
@@ -56,6 +57,11 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     @Override
     public void onLoginError(Exception e) {
         this.onLoginError(e.getLocalizedMessage());
+    }
+
+    @Override
+    public void onMessageError(String errorMessage) {
+        sendEvent(reactContext, RNXMPP_MESSAGE_ERROR, errorMessage);
     }
 
     @Override

@@ -20,6 +20,7 @@ public interface XmppServiceListener {
     void onLoginError(Exception e);
     void onMessage(Message message);
     void onMessageSend(WritableMap message);
+    void onMessageError(String errorMessage);
     void onRosterReceived(Roster roster);
     void onIQ(IQ iq);
     void onPresence(Presence presence);

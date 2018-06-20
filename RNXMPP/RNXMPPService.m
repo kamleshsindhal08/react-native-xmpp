@@ -568,7 +568,9 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     NSMutableDictionary* newMsgDict = [[NSMutableDictionary alloc] init];
     
     
+    @try{
     
+
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
@@ -588,6 +590,10 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
     [self.delegate onMessageSend:newMsgDict];
     
     [xmppStream sendElement:msg];
+    }@catch(NSException *ex){
+         [self.delegate onMessageError:[ex name]];
+      
+    }
 }
 - (NSString*)generateSecureUUID {
     

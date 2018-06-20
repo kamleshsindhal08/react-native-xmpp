@@ -28,6 +28,7 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     RCTResponseSenderBlock onMessageSend;
     RCTResponseSenderBlock onIQ;
     RCTResponseSenderBlock onPresence;
+    RCTResponseSenderBlock oneMessageError;
 }
 
 @synthesize bridge = _bridge;
@@ -100,6 +101,11 @@ RCT_EXPORT_MODULE();
 -(void)onMessageSend:(NSDictionary *)params {
     // NSDictionary *res = [self contentOf:message];
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSend" body:params];
+    
+}
+-(void)onMessageError:(NSString *)errorMessage {
+    // NSDictionary *res = [self contentOf:message];
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageError" body:errorMessage];
     
 }
 

@@ -12,7 +12,8 @@ var map = {
     'loginError': 'RNXMPPLoginError',
     'login': 'RNXMPPLogin',
     'roster': 'RNXMPPRoster',
-    'messageSend': 'RNXMPPMessageSend'
+    'messageSend': 'RNXMPPMessageSend',
+    'messageError': 'RNXMPPMessageError'
 }
 
 const LOG = (message) => {
