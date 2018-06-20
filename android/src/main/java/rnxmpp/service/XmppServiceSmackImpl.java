@@ -233,7 +233,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         }
         try {
             chat.sendMessage(message);
-            this.xmppServiceListener.onMessageSend(message.getStanzaId());
+            this.xmppServiceListener.onMessageSend(params);
         } catch (SmackException e) {
             this.xmppServiceListener.onMessageError(e.getLocalizedMessage());
             logger.log(Level.WARNING, "Could not send message", e);
