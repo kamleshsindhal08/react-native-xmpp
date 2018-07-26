@@ -200,15 +200,6 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         String chatIdentifier = (thread == null ? to : thread);
         Message message = new Message(to, text);
         DeliveryReceiptRequest.addTo(message);
-        this.xmppServiceListener.onMessageSend(message.getStanzaId());
-        // logger.log(Level.INFO, " getting id before ..... "+ message.getStanzaId());
-//        try {
-//            logger.log(Level.INFO, "SENDING MESSAGE .......");
-//            connection.sendStanza(message);
-//        } catch (SmackException e) {
-//            logger.log(Level.WARNING, "Could not send message", e);
-//        }
-
         ChatManager chatManager = ChatManager.getInstanceFor(connection);
         Chat chat = chatManager.getThreadChat(chatIdentifier);
         if (chat == null) {
@@ -220,8 +211,9 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         }
         try {
             chat.sendMessage(message);
-//            chat.get
+            this.xmppServiceListener.onMessageSend(message.getStanzaId());
         } catch (SmackException e) {
+            this.xmppServiceListener.onMessageError(e.getLocalizedMessage());
             logger.log(Level.WARNING, "Could not send message", e);
         }
     }
