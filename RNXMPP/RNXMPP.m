@@ -28,7 +28,7 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     RCTResponseSenderBlock onMessageSend;
     RCTResponseSenderBlock onIQ;
     RCTResponseSenderBlock onPresence;
-    RCTResponseSenderBlock oneMessageError;
+    RCTResponseSenderBlock onMessageError;
 }
 
 @synthesize bridge = _bridge;
