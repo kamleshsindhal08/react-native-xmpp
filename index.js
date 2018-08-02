@@ -30,6 +30,7 @@ class XMPP {
     constructor(){
         this.isConnected = false;
         this.isLogged = false;
+        this.isExecuted = false;
         this.listeners = [
             NativeAppEventEmitter.addListener(map.connect, this.onConnected.bind(this)),
             NativeAppEventEmitter.addListener(map.disconnect, this.onDisconnected.bind(this)),
@@ -53,6 +54,7 @@ class XMPP {
         LOG("Disconnected, error: "+error);
         this.isConnected = false;
         this.isLogged = false;
+        this.isExecuted = false;
     }
 
     onError(text){
@@ -114,7 +116,11 @@ class XMPP {
         if (!hostname){
             hostname = (username+'@/').split('@')[1].split('/')[0];
         }
-        React.NativeModules.RNXMPP.connect(username, password, auth, hostname, port);
+        console.log('xmpp connecting', this.isExecuted);
+        if (!this.isExecuted) {
+            React.NativeModules.RNXMPP.connect(username, password, auth, hostname, port);
+            this.isExecuted = true;
+        }
     }
 
     message(text, user, thread = null){
@@ -126,9 +132,9 @@ class XMPP {
         RNXMPP.sendStanza(stanza);
     }
 
-  sendSeenNotif(stanza) {
+    sendSeenNotif(stanza) {
         RNXMPP.sendSeenNotif(stanza);
-  }
+    }
 
     fetchRoster(){
         RNXMPP.fetchRoster();
@@ -143,10 +149,10 @@ class XMPP {
     }
 
     disconnect(){
-        if (this.isConnected){
-            React.NativeModules.RNXMPP.disconnect();
-        }
+        this.isExecuted = false;
+        React.NativeModules.RNXMPP.disconnect();
     }
+
     disconnectAfterSending(){
       if (this.isConnected){
         React.NativeModules.RNXMPP.disconnectAfterSending();
